@@ -11,7 +11,8 @@
 ########### Option 1: loading from EXCEL ##############
 #######################################################
 
-setwd("C:/Users/...") # set working directory
+# has set wd in the main R file
+# setwd("C:/Users/...") # set working directory
 # getwd()
 
 library(readxl)

@@ -10,7 +10,10 @@ library(expss) # vlookup_df function
 library(MASS) # mvrnorm function for simulation
 library(ggplot2) # plot the PSA results
 
-
+# Z: set the address of the main R file as WD automaticly, and no need to set it in CVD_parameters.R
+script_path <- rstudioapi::getActiveDocumentContext()$path
+setwd(dirname(script_path))
+rm(script_path)
 
 ###############################################################################
 ####################### Part 0: Parameter set up ##############################
