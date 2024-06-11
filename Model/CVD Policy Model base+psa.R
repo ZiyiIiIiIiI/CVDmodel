@@ -365,18 +365,18 @@ model <- function(age, SIMD, Diabetes, FH, CPD, SBP, TC, HDL, sex, first_event_c
 
 # No intervention
 base_nointv <- model(age, SIMD, Diabetes, FH, CPD, SBP, TC, HDL, sex, first_event_coef, post_event_coef, secondary_event_inputs, coef_c1, coef_c2, disc, tm) # discounted
-base_nointv$LY
-base_nointv$Cost
-base_nointv$QALY
+print(base_nointv$LY)
+print(base_nointv$Cost)
+print(base_nointv$QALY)
 
 # Statin effect
 TC_statin <- TC - (TC - HDL) * statin_ldleffect
 HDL_statin <- HDL * statin_hdleffect
 
 base_intv <- model(age, SIMD, Diabetes, FH, CPD, SBP, TC = TC_statin, HDL = HDL_statin, sex, first_event_coef, post_event_coef, secondary_event_inputs, coef_c1, coef_c2, disc, tm) # discounted
-base_intv$LY
-base_intv$Cost
-base_intv$QALY
+print(base_intv$LY)
+print(base_intv$Cost)
+print(base_intv$QALY)
 
 # Statin cost
 cycle <- seq(from = 1, to = tm, by = 1)
@@ -396,14 +396,14 @@ statin_disu_anucum_sur <- statin_disu_anucum * rowSums(base_intv$prob_event_yr)
 sum(statin_disu_anucum_sur)
 
 # Intervention overall
-sum(statin_anucum_sur) + base_intv$Cost
-base_intv$QALY - sum(statin_disu_anucum_sur)
+print(sum(statin_anucum_sur) + base_intv$Cost)
+print(base_intv$QALY - sum(statin_disu_anucum_sur))
 
 # Incremental effect
 incre_cost <- sum(statin_anucum_sur) + base_intv$Cost - base_nointv$Cost
-incre_cost
+print(incre_cost)
 incre_QALY <- base_intv$QALY - sum(statin_disu_anucum_sur) - base_nointv$QALY
-incre_QALY
+print(incre_QALY)
 
 
 
@@ -530,7 +530,7 @@ ylim <- lim_fn(min_c, max_c)
 xlim <- lim_fn(min_q, max_q)
 
 # plot
-ggplot(psa_result, aes(x = Incre_QALY, y = Incre_cost)) +
+CEplaneplot <- ggplot(psa_result, aes(x = Incre_QALY, y = Incre_cost)) +
   geom_point(colour = "violetred4") +
   ylab("Cost (£)") +
   xlab("QALY") +
@@ -541,6 +541,7 @@ ggplot(psa_result, aes(x = Incre_QALY, y = Incre_cost)) +
   geom_abline(aes(intercept = 0, slope = 20000, color = "blue"), linetype = "dashed") +
   scale_color_identity(labels = c("£20k"), guide = "legend")
 
+plot(CEplaneplot)
 
 ### 4.6 plot CEAC
 
@@ -553,7 +554,7 @@ for (i in 0:50000) {
 
 ceac <- data.frame(x = seq(0, 50000, by = 1), y = prob_nmb)
 
-ggplot(ceac, aes(x = x, y = y)) +
+CEACplot <- ggplot(ceac, aes(x = x, y = y)) +
   geom_point(colour = "violetred4") +
   ylab("Probability for the intervention to be cost-effective") +
   xlab("ICER threshold (£)") +
@@ -563,20 +564,20 @@ ggplot(ceac, aes(x = x, y = y)) +
   ylim(0, 1) +
   geom_vline(xintercept = 20000, color = "blue", linetype = "dashed")
 
-
+plot(CEACplot)
 
 
 ### I-IV : ---------->> Final results: base case & PSA
 base_nointv$LY # No intervention
-quantile(psa_result[, 1], c(0.025, 0.975), type = 1)
+print(quantile(psa_result[, 1], c(0.025, 0.975), type = 1))
 base_nointv$Cost
-quantile(psa_result[, 2], c(0.025, 0.975), type = 1)
+print(quantile(psa_result[, 2], c(0.025, 0.975), type = 1))
 base_nointv$QALY
-quantile(psa_result[, 3], c(0.025, 0.975), type = 1)
+print(quantile(psa_result[, 3], c(0.025, 0.975), type = 1))
 
 base_intv$LY # With intervention, cost including statin cost, QALY including statin disutility
-quantile(psa_result[, 4], c(0.025, 0.975), type = 1)
+print(quantile(psa_result[, 4], c(0.025, 0.975), type = 1))
 base_intv$Cost
-quantile(psa_result[, 5] + psa_result[, 7], c(0.025, 0.975), type = 1)
+print(quantile(psa_result[, 5] + psa_result[, 7], c(0.025, 0.975), type = 1))
 base_intv$QALY
-quantile(psa_result[, 6] - psa_result[, 8], c(0.025, 0.975), type = 1)
+print(quantile(psa_result[, 6] - psa_result[, 8], c(0.025, 0.975), type = 1))
