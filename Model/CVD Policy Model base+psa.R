@@ -317,10 +317,7 @@ model <- function(age, SIMD, Diabetes, FH, CPD, SBP, TC, HDL, sex, first_event_c
   ### 3.4 vlookup matching norm values
   agecyclem <- cyclem + m_agem # age matrix to look up
   m_utility_norm <- matrix(0, nrow = tm, ncol = tm)
-  for (j in 1:tm) {
-    a <- vlookup_df(agecyclem[, j], dict, result_column = "ut")
-    m_utility_norm[, j] <- as.vector(a[, 1]) # the result of vlookup_df is a dataframe so used 'as.vector'.
-  }
+  m_utility_norm[, 1:tm] <- dict[agecyclem[, 1:tm], "ut"] # Z: the vlookup_df function is no longer working
 
 
   ### 3.5 remaining QALY after first event
@@ -335,8 +332,7 @@ model <- function(age, SIMD, Diabetes, FH, CPD, SBP, TC, HDL, sex, first_event_c
 
 
   ### 3.6 QALY prior to events                                                              # i.e. QALY between starting age and age of event. this is also the total QALY for CVD fatal first event
-  preeventQALY_und <- vlookup_df(age_cyc[1:tm], dict, result_column = "ut")
-  preeventQALY_und <- as.vector(preeventQALY_und[, 1])
+  preeventQALY_und <- dict[age_cyc[1:tm], "ut"] # Z: the vlookup_df function is no longer working
   preeventQALY_dis <- preeventQALY_und / ((1 + disc)^cycle)
   preeventQALY_dis_total <- NULL
   for (i in 1:length(cycle)) {
