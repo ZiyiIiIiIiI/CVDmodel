@@ -102,25 +102,37 @@ model <- function(age, SIMD, Diabetes, FH, CPD, SBP, TC, HDL, sex, first_event_c
     hazard[, num] <- exp(linpred[num]) * exp(first_event_coef[10, num] * cycle)
   }
 
+  ## Transition probabilities from (mid-cycle) hazards, assuming constant hazard within each cycle
+  ## tp(t) = 1 - exp(-h(t_mid) * cycle_length)
+  hazard_mid <- (hazard + rbind(rep(0, 4), hazard[-tm, ])) / 2
+  tp <- matrix(nrow = tm, ncol = 4, 0)
+  for (num in 1:4) {
+    tp[, num] <- 1 - exp(-hazard_mid[, num] * 1)
+  }
 
   ## Cumulative incidence
   CumInc <- matrix(data = 0, nrow = tm, ncol = 5) # Set up. 1st column is CVD free
-  CumInc[1, ] <- c((1 - sum(hazard[1, ])), hazard[1, ])
+  CumInc[1, ] <- c((1 - sum(tp[1, ])), tp[1, ])
 
   for (t in 2:tm) {
-    CumInc[t, 2] <- CumInc[t - 1, 2] + CumInc[t - 1, 1] * hazard[t, 1]
-    CumInc[t, 3] <- CumInc[t - 1, 3] + CumInc[t - 1, 1] * hazard[t, 2]
-    CumInc[t, 4] <- CumInc[t - 1, 4] + CumInc[t - 1, 1] * hazard[t, 3]
-    CumInc[t, 5] <- CumInc[t - 1, 5] + CumInc[t - 1, 1] * hazard[t, 4]
-    CumInc[t, 1] <- ifelse(CumInc[t - 1, 1] < 0.001, 0, (1 - sum(hazard[t, ])) * CumInc[t - 1, 1]) # The fudge is to avoid negative numbers for alive CVD free
+    # In order to aviod negative numbers in CumInc matrix:
+    # If the sum of the tps > 1, then standardise the sum to be 1
+    if (sum(tp[t, ]) > 1) {
+      tp[t, ] <- tp[t, ] / sum(tp[t, ])
+    }
+    CumInc[t, 2] <- CumInc[t - 1, 2] + CumInc[t - 1, 1] * tp[t, 1]
+    CumInc[t, 3] <- CumInc[t - 1, 3] + CumInc[t - 1, 1] * tp[t, 2]
+    CumInc[t, 4] <- CumInc[t - 1, 4] + CumInc[t - 1, 1] * tp[t, 3]
+    CumInc[t, 5] <- CumInc[t - 1, 5] + CumInc[t - 1, 1] * tp[t, 4]
+    CumInc[t, 1] <- (1 - sum(tp[t, ])) * CumInc[t - 1, 1] # The fudge that once was built here to avoid negative numbers, is no longer needed
   }
 
 
   ## Probability of getting an event at each cycle
   CumInc_temp <- rbind(rep(0, 4), CumInc[-nrow(CumInc), 2:5]) # Create a matrix to enable the cumulative events deduction.
-  CumInc_all <- rowSums(CumInc[, 2:5])
+  CumInc_all <- rowSums(CumInc[, 2:5]) # now, the sum of CumInc[, 2:5] can reach to 1
   prob_event_yr <- CumInc[, 2:5] - CumInc_temp
-  prob_event_yr[CumInc_all > 0.998] <- 0 # Fudge. if the total hazard >0.998, then change all the probability to 0, assuming all people have died.
+  # prob_event_yr[CumInc_all > 1] <- 0 # The fudge that once was built here, is no longer needed
 
 
   ### 1.2 - 2nd equation: Remaining life years for the non-fatal first events
